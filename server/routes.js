@@ -11,7 +11,7 @@ router.post('/reset-password', resetPassword);  // Reset password
 router.post('/logout', logoutUser);  // Logout user
 
 router.post('/', upload, savePatient);
-router.put('/:id', updatePatientData);
+router.put('/:id', upload, updatePatientData);
 router.get('/:id', getPatient);
 router.delete('/:id', deletePatientData);
 

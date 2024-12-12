@@ -11,7 +11,7 @@ const router = express.Router();
 
 
 router.post('/', upload, savePatient);
-router.put('/:id', updatePatientData);
+router.put('/:id', upload, updatePatientData);
 router.get('/:id', getPatient);
 router.delete('/:id', deletePatientData);
 

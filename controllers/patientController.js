@@ -1,13 +1,15 @@
 const queryDatabase = require('../config/db');
 const { bucket } = require('../config/storage.js');
+const path = require('path');
 
 // Helper function for validation
 const validatePatientData = (data) => {
     const { id, name, age, gender, address, email} = data;
-    if (!id || !name || !age || !gender || !address || !email || !image) {
+    const ageNumber = Number(age);
+    if (!id || !name || !age || !gender || !address || !email) {
         throw new Error('Required fields missing');
     }
-    if (typeof age !== 'number' || age <= 0) {
+    if (isNaN(ageNumber) || ageNumber <= 0) {
         throw new Error('Invalid age');
     }
     const validGenders = ['laki-laki', 'perempuan'];
@@ -21,12 +23,15 @@ const validatePatientData = (data) => {
 
 // Fungsi untuk upload gambar dan prediksi
 const savePatient = async (req, res) => {
-  const { id, name, gender, email, address, complications } = req.body;
+  const { id, name, age, gender, email, address, complications } = req.body;
   const image = req.file;
 
+  if (!image) {
+    return res.status(400).json({ error: 'Gambar harus di-upload.' });
+  }
+
   try {
-  
-    validatePatientData({ id, name, age, gender, address, email, image });
+    validatePatientData({ id, name, age, gender, address, email});
     // Cek apakah ID pasien sudah ada di database
     const existingPatient = await queryDatabase(
       'SELECT * FROM patients WHERE id = ?',
@@ -39,8 +44,8 @@ const savePatient = async (req, res) => {
 
     // Simpan data pasien ke database jika ID belum ada
     await queryDatabase(
-      'INSERT INTO patients (id, name, gender, email, address, komplikasi) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, name, gender, email, address, complications]
+      'INSERT INTO patients (id, name, age, gender, email, address, komplikasi) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [id, name, age, gender, email, address, complications]
     );
 
     // Generate nama file unik
@@ -114,9 +119,25 @@ const getPatient = async (req, res) => {
   }
 };
 
+// update patient
 const updatePatientData = async (req, res) => {
   try {
-        // Pertama, update data pasien tanpa mengubah ID atau komplikasi
+      // Fungsi untuk membuat nama file unik
+      const generateFileName = (id, originalName) => {
+          const extension = path.extname(originalName); // Mendapatkan ekstensi file
+          const timestamp = Date.now(); // Timestamp untuk nama unik
+          return `${id}_${timestamp}${extension}`;
+      };
+
+      // Ambil data dari request body
+      const { id, age, gender, address, email } = req.body;
+
+      // Validasi nilai age
+      if (isNaN(age) || age < 0) {
+          return res.status(400).json({ message: 'Umur tidak valid' });
+      }
+
+      // Pertama, update data pasien tanpa mengubah ID atau komplikasi
       const patientUpdateQuery = `
           UPDATE patients 
           SET age = ?, gender = ?, address = ?, email = ?
@@ -125,15 +146,15 @@ const updatePatientData = async (req, res) => {
       const result = await queryDatabase(patientUpdateQuery, [age, gender, address, email, id]);
 
       if (result.affectedRows === 0) {
-          return res.status(404).json({ message: 'Patient not found' });
+          return res.status(404).json({ message: 'Pasien tidak ditemukan' });
       }
 
       // Jika ada gambar baru (retake), update gambar di storage dan database
       if (req.file) {
           const image = req.file;  // Ambil file gambar baru
-          const fileName = generateFileName(id, image.originalname); // Nama file gambar baru
+          const fileName = generateFileName(id, image.originalname); // Nama file gambar baru 
 
-          // Upload gambar baru ke Cloud Storage dan dapatkan URL-nya
+          // Mulai upload stream dengan file buffer
           const blob = bucket.file(fileName);
           const blobStream = blob.createWriteStream({
               resumable: false,
@@ -159,26 +180,25 @@ const updatePatientData = async (req, res) => {
                   const imageUpdateResult = await queryDatabase(updateImageQuery, [publicUrl, id]);
 
                   if (imageUpdateResult.affectedRows === 0) {
-                      return res.status(404).json({ error: 'Patient ID not found for image update' });
+                      return res.status(404).json({ error: 'ID pasien tidak ditemukan untuk pembaruan gambar' });
                   }
 
                   // Kirim respons sukses
                   res.status(200).json({
-                      message: 'Patient data and image updated successfully',
+                      message: 'Data pasien dan gambar berhasil diperbarui',
                       publicUrl: publicUrl,  // Menyertakan URL gambar baru dalam respons
                   });
-
               } catch (dbError) {
                   console.error('Database error:', dbError);
                   return res.status(500).json({ error: 'Gagal menyimpan URL gambar baru ke database' });
               }
           });
 
-          // Mulai upload stream dengan file buffer
+          // Mulai unggah file
           blobStream.end(image.buffer);
       } else {
           // Jika tidak ada gambar baru (retake), hanya update data pasien tanpa gambar
-          res.status(200).json({ message: 'Patient data updated successfully' });
+          res.status(200).json({ message: 'Data pasien berhasil diperbarui' });
       }
 
   } catch (error) {

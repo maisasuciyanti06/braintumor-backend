@@ -1,6 +1,7 @@
 // Mengimpor Firebase dan auth untuk versi 8.x.x
 const firebase = require('firebase');
 require('firebase/auth'); 
+require('dotenv').config();
 
 // Konfigurasi Firebase Anda
 const firebaseConfig = {

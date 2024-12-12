@@ -29,17 +29,6 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Middleware untuk memastikan model dimuat sebelum melayani permintaan
-app.use((req, res, next) => {
-    if (!app.locals.model) {
-        return res.status(503).json({
-            status: 'fail',
-            message: 'Model not loaded yet. Please try again later.',
-        });
-    }
-    next();
-});
-
 // Gunakan rute autentikasi dan pasien
 app.use('/auth', authRoutes);
 app.use('/patients', patientRoutes);
@@ -52,28 +41,6 @@ app.use((req, res, next) => {
     });
 });
 
-// Penanganan error khusus untuk InputError
-app.use((err, req, res, next) => {
-    if (err instanceof InputError) {
-        return res.status(err.statusCode || 400).json({
-            status: 'fail',
-            message: `${err.message}. Silakan gunakan foto lain.`,
-        });
-    }
-
-    if (err.status === 413) {
-        return res.status(413).json({
-            status: 'fail',
-            message: 'Payload content length greater than maximum allowed.',
-        });
-    }
-
-    console.error('Unhandled error:', err.stack);
-    res.status(500).json({
-        status: 'error',
-        message: 'Internal Server Error',
-    });
-});
 
 // Graceful shutdown
 process.on('SIGINT', () => {
