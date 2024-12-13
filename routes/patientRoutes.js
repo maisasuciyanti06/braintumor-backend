@@ -9,7 +9,6 @@ const {
 const upload = require('../config/multerConfig');
 const router = express.Router();
 
-
 router.post('/', upload, savePatient);
 router.put('/:id', upload, updatePatientData);
 router.get('/:id', getPatient);

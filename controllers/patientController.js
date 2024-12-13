@@ -94,7 +94,6 @@ const savePatient = async (req, res) => {
   }
 };
 
-
 // get patient data
 const getPatient = async (req, res) => {
   try {
@@ -103,7 +102,6 @@ const getPatient = async (req, res) => {
           return res.status(400).json({ message: 'Patient ID is required' });
       }
 
-      // Query untuk hanya memilih kolom-kolom yang dibutuhkan
       const query = 'SELECT id, name, age, gender, address, email, komplikasi, created_at, update_at FROM patients WHERE id = ?';
       const patient = await queryDatabase(query, [id]);
 
@@ -111,7 +109,6 @@ const getPatient = async (req, res) => {
           return res.status(404).json({ message: 'Patient not found' });
       }
 
-      // Mengirimkan data pasien yang ditemukan, hanya dengan kolom yang diminta
       res.status(200).json({ patient: patient[0] });
   } catch (error) {
       console.error(error);
@@ -124,15 +121,14 @@ const updatePatientData = async (req, res) => {
   try {
       // Fungsi untuk membuat nama file unik
       const generateFileName = (id, originalName) => {
-          const extension = path.extname(originalName); // Mendapatkan ekstensi file
-          const timestamp = Date.now(); // Timestamp untuk nama unik
+          const extension = path.extname(originalName); 
+          const timestamp = Date.now(); 
           return `${id}_${timestamp}${extension}`;
       };
 
       // Ambil data dari request body
       const { id, age, gender, address, email } = req.body;
 
-      // Validasi nilai age
       if (isNaN(age) || age < 0) {
           return res.status(400).json({ message: 'Umur tidak valid' });
       }
@@ -186,7 +182,7 @@ const updatePatientData = async (req, res) => {
                   // Kirim respons sukses
                   res.status(200).json({
                       message: 'Data pasien dan gambar berhasil diperbarui',
-                      publicUrl: publicUrl,  // Menyertakan URL gambar baru dalam respons
+                      publicUrl: publicUrl,  // url baru
                   });
               } catch (dbError) {
                   console.error('Database error:', dbError);
@@ -228,7 +224,6 @@ const deletePatientData = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
 
 module.exports = {
     savePatient,

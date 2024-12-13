@@ -41,7 +41,6 @@ app.use((req, res, next) => {
     });
 });
 
-
 // Graceful shutdown
 process.on('SIGINT', () => {
     console.log('SIGINT signal received: closing server gracefully.');

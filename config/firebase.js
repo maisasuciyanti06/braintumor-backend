@@ -13,10 +13,8 @@ const firebaseConfig = {
   appId: process.env.FIREBASE_APP_ID,
 };
 
-// Inisialisasi Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Mengakses auth
 const auth = firebase.auth();
 
 

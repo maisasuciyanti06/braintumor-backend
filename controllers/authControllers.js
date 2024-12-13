@@ -1,5 +1,5 @@
 const { auth } = require('../config/firebase');
-const queryDatabase = require('../config/db'); // Koneksi MySQL
+const queryDatabase = require('../config/db'); 
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
 
